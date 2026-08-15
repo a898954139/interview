@@ -3,644 +3,226 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Construction Planning and Budget System — client-only demo">
-  <title>Construction Planning &amp; Budget System · Demo</title>
+  <meta name="description" content="Construction WBS and approval-gate workflow demo">
+  <title>Construction WBS Control · Demo</title>
   <style>
     :root {
-      --ink: #172033;
-      --slate: #5d687a;
-      --muted: #8993a2;
-      --paper: #f4f3ee;
-      --panel: #ffffff;
-      --line: rgba(23, 32, 51, .13);
-      --cyan: #20b8d3;
-      --cyan-deep: #087e98;
-      --gold: #c39a43;
-      --gold-deep: #8d681e;
-      --green: #1fa36f;
-      --green-deep: #13734e;
-      --warning: #d9772f;
-      --shadow: 0 18px 44px rgba(23, 32, 51, .08);
-      --radius: 18px;
+      --ink:#152238; --slate:#536176; --muted:#8290a4; --paper:#f5f5f1; --panel:#fff;
+      --line:#dfe3e7; --line-strong:#cbd2d9; --gold:#d1a84d; --gold-pale:#f3ecd9;
+      --cyan:#20b8d3; --cyan-deep:#087f99; --cyan-pale:#e6f8fb; --green:#228b67;
+      --green-pale:#e9f5f0; --amber:#bd741f; --amber-pale:#fff3e4;
+      --shadow:0 18px 46px rgba(27,42,65,.08); --shadow-soft:0 7px 22px rgba(27,42,65,.07);
+      --radius:20px;
     }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      min-width: 320px;
-      overflow-x: hidden;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 8% 0%, rgba(32, 184, 211, .12), transparent 28rem),
-        radial-gradient(circle at 96% 8%, rgba(195, 154, 67, .13), transparent 30rem),
-        var(--paper);
-      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{
+      margin:0;min-width:320px;color:var(--ink);
+      background:radial-gradient(circle at 8% -10%,rgba(32,184,211,.13),transparent 31rem),
+        radial-gradient(circle at 94% 2%,rgba(209,168,77,.11),transparent 28rem),var(--paper);
+      font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif
     }
-
-    button, input { font: inherit; }
-    button { color: inherit; }
-    button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
-      outline: 3px solid rgba(32, 184, 211, .36);
-      outline-offset: 2px;
-    }
-
-    .app-shell { width: min(1480px, calc(100% - 40px)); margin: 0 auto; padding: 22px 0 42px; }
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 10px 0 28px;
-      border-bottom: 1px solid var(--line);
-    }
-    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .brand-mark {
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
-      flex: 0 0 auto;
-      border-radius: 10px;
-      color: #fff;
-      background: var(--ink);
-      box-shadow: 5px 5px 0 rgba(32, 184, 211, .7);
-      font: 800 14px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
-    }
-    .brand-title { font: 700 13px/1.2 Georgia, "Times New Roman", serif; letter-spacing: .04em; }
-    .brand-subtitle { margin-top: 3px; color: var(--muted); font: 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .12em; }
-    .top-actions { display: flex; align-items: center; gap: 10px; }
-    .local-badge {
-      padding: 8px 10px;
-      border: 1px solid rgba(31, 163, 111, .24);
-      border-radius: 999px;
-      color: var(--green-deep);
-      background: rgba(31, 163, 111, .08);
-      font: 10px ui-monospace, SFMono-Regular, Consolas, monospace;
-      letter-spacing: .04em;
-      white-space: nowrap;
-    }
-
-    .hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: end; padding: 54px 0 34px; }
-    .eyebrow { color: var(--gold-deep); font: 11px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; }
-    h1, h2, h3, p { margin: 0; }
-    h1 { max-width: 850px; margin-top: 14px; font: 700 clamp(38px, 5vw, 74px)/.98 Georgia, "Times New Roman", serif; letter-spacing: -.035em; }
-    .hero-copy { max-width: 770px; margin-top: 22px; color: var(--slate); font-size: 17px; line-height: 1.85; }
-    .mobile-only-break { display: none; }
-    .hero-note { max-width: 300px; padding: 16px 18px; border-left: 3px solid var(--cyan); color: var(--slate); background: rgba(255, 255, 255, .56); font-size: 12px; line-height: 1.7; }
-    .hero-note strong { display: block; margin-bottom: 5px; color: var(--ink); font: 700 11px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
-
-    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
-    .summary-card { padding: 15px 16px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, .74); }
-    .summary-label { color: var(--muted); font: 10px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .09em; text-transform: uppercase; }
-    .summary-value { margin-top: 7px; font: 700 24px/1 Georgia, "Times New Roman", serif; }
-    .summary-hint { margin-top: 5px; color: var(--muted); font-size: 11px; }
-
-    .workspace { display: grid; grid-template-columns: minmax(0, 1.38fr) minmax(330px, .72fr); min-height: 700px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); }
-    .tree-panel { min-width: 0; display: flex; flex-direction: column; }
-    .panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 24px 26px 20px; border-bottom: 1px solid var(--line); }
-    .panel-header h2 { margin-top: 8px; font: 700 25px/1.1 Georgia, "Times New Roman", serif; letter-spacing: -.02em; }
-    .panel-description { max-width: 660px; margin-top: 9px; color: var(--slate); font-size: 12px; line-height: 1.7; }
-    .panel-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      min-height: 34px;
-      padding: 8px 11px;
-      border: 1px solid var(--line);
-      border-radius: 9px;
-      cursor: pointer;
-      background: #fff;
-      color: var(--slate);
-      font-size: 11px;
-      transition: transform .16s ease, border-color .16s ease, background .16s ease, color .16s ease;
-    }
-    .button:hover { transform: translateY(-1px); border-color: rgba(23, 32, 51, .3); color: var(--ink); }
-    .button-primary { border-color: var(--cyan); color: var(--ink); background: var(--cyan); font-weight: 800; }
-    .button-primary:hover { border-color: var(--cyan-deep); background: #49c8de; }
-    .button-dark { border-color: var(--ink); color: #fff; background: var(--ink); }
-    .button-danger { color: #a94d24; background: rgba(217, 119, 47, .06); }
-    .button-compact { min-height: 28px; padding: 5px 8px; border-radius: 7px; font-size: 10px; }
-
-    .tree-scroll { flex: 1; overflow: auto; padding: 22px 26px 30px; background: linear-gradient(180deg, rgba(244, 243, 238, .54), #fff 180px); }
-    .tree-root { max-width: 920px; margin: 0 auto; }
-    .branch { position: relative; }
-    .children { margin: 8px 0 0 19px; padding-left: 20px; border-left: 1px solid rgba(23, 32, 51, .15); }
-    .node-card {
-      position: relative;
-      margin: 0 0 10px;
-      padding: 13px 14px 12px;
-      border: 1px solid rgba(23, 32, 51, .15);
-      border-radius: 13px;
-      background: #fff;
-      cursor: pointer;
-      transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
-    }
-    .node-card::before { content: ""; position: absolute; left: -21px; top: 25px; width: 20px; border-top: 1px solid rgba(23, 32, 51, .15); }
-    .tree-root > .branch > .node-card::before { display: none; }
-    .node-card:hover { transform: translateY(-1px); border-color: rgba(23, 32, 51, .3); box-shadow: 0 7px 18px rgba(23, 32, 51, .07); }
-    .node-card.is-selected { border: 2px solid var(--cyan); padding: 12px 13px 11px; box-shadow: 0 9px 22px rgba(32, 184, 211, .14); }
-    .node-card.is-selected::before { left: -22px; }
-    .node-head { display: flex; align-items: flex-start; gap: 9px; }
-    .node-toggle { width: 23px; height: 23px; flex: 0 0 auto; padding: 0; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; color: var(--slate); background: var(--paper); font: 700 14px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .node-toggle:hover { border-color: var(--cyan); color: var(--cyan-deep); }
-    .node-copy { min-width: 0; flex: 1; }
-    .node-kicker { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; color: var(--muted); font: 9px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
-    .node-level { color: var(--gold-deep); }
-    .node-code { color: var(--muted); }
-    .node-title { margin-top: 5px; font: 700 16px/1.25 Georgia, "Times New Roman", serif; overflow-wrap: anywhere; }
-    .node-signoff { flex: 0 0 auto; }
-    .status-chip, .execution-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 7px; border-radius: 999px; font: 9px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .02em; white-space: nowrap; }
-    .status-chip::before, .execution-chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-    .signoff-not_started { color: var(--muted); background: rgba(23, 32, 51, .06); }
-    .signoff-pending { color: var(--warning); background: rgba(217, 119, 47, .1); }
-    .signoff-approved { color: var(--green-deep); background: rgba(31, 163, 111, .11); }
-    .execution-idle { color: var(--muted); background: rgba(23, 32, 51, .05); }
-    .execution-active { color: var(--cyan-deep); background: rgba(32, 184, 211, .11); }
-    .execution-complete { color: var(--green-deep); background: rgba(31, 163, 111, .11); }
-    .node-body { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(23, 32, 51, .09); }
-    .node-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 12px; color: var(--slate); font-size: 10px; }
-    .node-meta strong { color: var(--ink); font: 700 11px ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .node-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-    .node-actions .button { min-height: 27px; }
-    .node-count { margin: 2px 0 12px; color: var(--muted); font: 10px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .05em; }
-
-    .inspector { min-width: 0; display: flex; flex-direction: column; border-left: 1px solid var(--line); background: #fbfbf8; }
-    .inspector-inner { overflow: auto; padding: 26px 24px 30px; }
-    .inspector-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-    .inspector-title h2 { margin-top: 7px; font: 700 28px/1.05 Georgia, "Times New Roman", serif; overflow-wrap: anywhere; }
-    .inspector-code { margin-top: 8px; color: var(--muted); font: 10px ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .inspector-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 20px; }
-    .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 22px; }
-    .metric { padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
-    .metric-label { color: var(--muted); font: 9px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
-    .metric-value { margin-top: 5px; font: 700 14px ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .info-card { margin-top: 12px; padding: 15px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
-    .info-card.accent-cyan { border-top: 3px solid var(--cyan); }
-    .info-card.accent-gold { border-top: 3px solid var(--gold); }
-    .info-card.accent-green { border-top: 3px solid var(--green); }
-    .card-label { color: var(--muted); font: 10px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .12em; }
-    .card-value { margin-top: 7px; font: 700 15px/1.3 Georgia, "Times New Roman", serif; }
-    .card-copy { margin-top: 7px; color: var(--slate); font-size: 11px; line-height: 1.65; }
-    .stage-list { display: grid; gap: 7px; margin-top: 12px; }
-    .stage { display: grid; grid-template-columns: 29px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid rgba(23, 32, 51, .1); border-radius: 9px; background: var(--paper); }
-    .stage-dot { width: 23px; height: 23px; display: grid; place-items: center; border: 1px solid rgba(23, 32, 51, .16); border-radius: 50%; color: var(--muted); background: #fff; font: 10px ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .stage.done { border-color: rgba(31, 163, 111, .25); background: rgba(31, 163, 111, .06); }
-    .stage.done .stage-dot { border-color: var(--green); color: #fff; background: var(--green); }
-    .stage.current { border-color: rgba(32, 184, 211, .4); background: rgba(32, 184, 211, .08); }
-    .stage.current .stage-dot { border-color: var(--gold-deep); color: var(--ink); background: var(--gold); }
-    .stage-label { font: 700 10px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
-    .stage-caption { margin-top: 3px; color: var(--muted); font-size: 10px; }
-    .stage-state { color: var(--muted); font: 9px ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .stage.done .stage-state { color: var(--green-deep); }
-    .stage.current .stage-state { color: var(--cyan-deep); }
-    .empty-inspector { display: grid; place-items: center; min-height: 500px; padding: 30px; color: var(--muted); text-align: center; }
-    .empty-inspector strong { display: block; margin-bottom: 8px; color: var(--ink); font: 700 18px Georgia, "Times New Roman", serif; }
-
-    .footer-note { display: flex; justify-content: space-between; gap: 18px; padding-top: 16px; color: var(--muted); font-size: 10px; line-height: 1.6; }
-    .footer-note span:last-child { text-align: right; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-    dialog { width: min(420px, calc(100% - 30px)); padding: 0; border: 0; border-radius: 16px; color: var(--ink); background: #fff; box-shadow: 0 24px 70px rgba(23, 32, 51, .28); }
-    dialog::backdrop { background: rgba(23, 32, 51, .42); backdrop-filter: blur(3px); }
-    .dialog-inner { padding: 24px; }
-    .dialog-inner h2 { font: 700 23px Georgia, "Times New Roman", serif; }
-    .dialog-copy { margin-top: 8px; color: var(--slate); font-size: 12px; line-height: 1.6; }
-    .dialog-label { display: block; margin-top: 20px; color: var(--muted); font: 10px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
-    .dialog-input { width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--paper); }
-    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 20; max-width: min(380px, calc(100% - 44px)); padding: 12px 15px; border: 1px solid rgba(32, 184, 211, .4); border-radius: 10px; color: var(--ink); background: #fff; box-shadow: 0 12px 28px rgba(23, 32, 51, .16); font-size: 12px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .18s ease, transform .18s ease; }
-    .toast.is-visible { opacity: 1; transform: translateY(0); }
-
-    @media (max-width: 980px) {
-      .workspace { grid-template-columns: 1fr; }
-      .inspector { min-height: 560px; border-top: 1px solid var(--line); border-left: 0; }
-      .hero { grid-template-columns: 1fr; }
-      .hero-note { max-width: none; }
-    }
-    @media (max-width: 640px) {
-      .app-shell { width: min(100% - 24px, 1480px); padding-top: 12px; }
-      .topbar { align-items: flex-start; padding-bottom: 18px; }
-      .local-badge { display: none; }
-      .hero { padding: 36px 0 24px; }
-      h1 { font-size: 39px; overflow-wrap: anywhere; }
-      .hero-copy { font-size: 15px; overflow-wrap: anywhere; word-break: break-all; }
-      .mobile-only-break { display: block; }
-      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .panel-header { flex-direction: column; padding: 19px 16px 16px; }
-      .panel-actions { justify-content: flex-start; }
-      .tree-scroll { padding: 16px 12px 22px; }
-      .node-body { align-items: flex-start; flex-direction: column; }
-      .node-actions { justify-content: flex-start; }
-      .node-signoff { display: none; }
-      .inspector-inner { padding: 21px 16px 24px; }
-      .footer-note { flex-direction: column; }
-      .footer-note span:last-child { text-align: left; }
+    button,input{font:inherit} button,a{-webkit-tap-highlight-color:transparent}
+    button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px solid rgba(32,184,211,.34);outline-offset:3px}
+    h1,h2,h3,p{margin:0}
+    .appbar{position:sticky;top:0;z-index:30;border-bottom:1px solid rgba(21,34,56,.1);background:rgba(248,248,245,.88);backdrop-filter:blur(18px)}
+    .appbar-inner{width:min(1720px,calc(100% - 40px));min-height:70px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{display:flex;align-items:center;gap:13px;min-width:0}
+    .brand-mark{width:38px;height:38px;display:grid;place-items:center;flex:0 0 auto;border-radius:11px;color:#fff;background:var(--ink);box-shadow:5px 5px 0 var(--cyan);font:800 12px/1 ui-monospace,Consolas,monospace}
+    .brand-title{font-size:13px;font-weight:800;letter-spacing:.035em}
+    .brand-path{margin-top:3px;color:var(--muted);font:10px/1.2 ui-monospace,Consolas,monospace;letter-spacing:.06em}
+    .app-actions{display:flex;align-items:center;gap:9px}
+    .local-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(34,139,103,.22);border-radius:999px;color:var(--green);background:rgba(255,255,255,.62);font:9px ui-monospace,Consolas,monospace;letter-spacing:.05em;white-space:nowrap}
+    .local-pill:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green)}
+    .shell{width:min(1720px,calc(100% - 40px));margin:0 auto;padding:28px 0 46px}
+    .intro{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:28px;margin-bottom:20px}
+    .eyebrow{color:var(--cyan-deep);font:10px ui-monospace,Consolas,monospace;letter-spacing:.18em;text-transform:uppercase}
+    h1{margin-top:9px;font-size:clamp(30px,3.4vw,50px);line-height:1.08;letter-spacing:-.035em}
+    .intro-copy{max-width:920px;margin-top:10px;color:var(--slate);font-size:14px;line-height:1.7}
+    .plan-meta{display:grid;grid-template-columns:repeat(3,auto);gap:8px}
+    .meta-chip{min-width:112px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.72)}
+    .meta-label{color:var(--muted);font:8px ui-monospace,Consolas,monospace;letter-spacing:.11em}
+    .meta-value{margin-top:5px;font-size:12px;font-weight:800}
+    .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow)}
+    .workflow-card{overflow:hidden}
+    .workflow-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 22px 16px;border-bottom:1px solid var(--line)}
+    .workflow-title{min-width:0}.workflow-title h2{margin-top:6px;font-size:20px;line-height:1.25;overflow-wrap:anywhere}
+    .current-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;color:var(--cyan-deep);background:var(--cyan-pale);font-size:11px;font-weight:800;white-space:nowrap}
+    .current-badge:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 4px rgba(32,184,211,.13)}
+    .gate-scroll{overflow-x:auto;padding:18px 20px 16px;scrollbar-width:thin}
+    .gate-track{min-width:1340px;display:flex;align-items:stretch}
+    .gate{position:relative;min-width:178px;flex:1 1 0;min-height:86px;margin-left:-12px;padding:16px 28px 14px 36px;border:0;cursor:pointer;text-align:left;color:var(--slate);background:#f6f6f3;clip-path:polygon(0 0,calc(100% - 22px) 0,100% 50%,calc(100% - 22px) 100%,0 100%,22px 50%);transition:filter .16s,transform .16s,color .16s}
+    .gate:first-child{margin-left:0;padding-left:24px;clip-path:polygon(0 0,calc(100% - 22px) 0,100% 50%,calc(100% - 22px) 100%,0 100%)}
+    .gate:hover{filter:brightness(.98);transform:translateY(-2px)}
+    .gate.is-done{color:var(--ink);background:var(--gold-pale)}
+    .gate.is-current{z-index:3;color:#fff;background:var(--ink);box-shadow:inset 0 -4px 0 var(--cyan)}
+    .gate.is-viewing:not(.is-current){box-shadow:inset 0 -4px 0 var(--cyan)}
+    .gate-step{font:9px ui-monospace,Consolas,monospace;letter-spacing:.12em;opacity:.7}
+    .gate-name{margin-top:7px;font-size:15px;font-weight:800;line-height:1.2}.gate-sub{margin-top:5px;font-size:10px;line-height:1.25;opacity:.78}
+    .gate-state{position:absolute;right:28px;top:12px;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;font-size:10px;font-weight:900;background:rgba(255,255,255,.82);color:var(--muted)}
+    .gate.is-done .gate-state{color:var(--green)}.gate.is-current .gate-state{color:var(--ink);background:var(--cyan)}
+    .approval-panel{display:grid;grid-template-columns:minmax(260px,.82fr) minmax(520px,1.8fr) auto;align-items:center;gap:22px;padding:18px 22px 20px;border-top:1px solid var(--line);background:#fbfbf8}
+    .approval-summary h3{margin-top:5px;font-size:18px}.approval-summary p{margin-top:6px;color:var(--slate);font-size:11px;line-height:1.5}
+    .progress-line{height:5px;margin-top:12px;overflow:hidden;border-radius:99px;background:#e7eaed}.progress-line span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--gold),var(--cyan));transition:width .28s}
+    .signer-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .signer{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:9px;min-width:0;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+    .avatar{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;color:#fff;background:var(--ink);font-size:11px;font-weight:800}
+    .signer.is-approved .avatar{background:var(--green)}.signer.is-pending .avatar{background:var(--amber)}
+    .signer-name{overflow:hidden;font-size:11px;font-weight:800;text-overflow:ellipsis;white-space:nowrap}.signer-role{margin-top:3px;overflow:hidden;color:var(--muted);font-size:9px;text-overflow:ellipsis;white-space:nowrap}
+    .status-dot{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;color:var(--muted);background:#f0f2f4;font-size:10px;font-weight:900}
+    .signer.is-approved .status-dot{color:var(--green);background:var(--green-pale)}.signer.is-pending .status-dot{color:var(--amber);background:var(--amber-pale)}
+    .approval-actions{display:flex;flex-direction:column;gap:7px}
+    .button{min-height:36px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:10px;cursor:pointer;color:var(--slate);background:#fff;font-size:11px;font-weight:700;text-decoration:none;transition:transform .16s,border-color .16s,color .16s,background .16s}
+    .button:hover:not(:disabled){transform:translateY(-1px);border-color:var(--cyan);color:var(--ink)}.button:disabled{cursor:not-allowed;opacity:.42}
+    .button-primary{border-color:var(--cyan);color:var(--ink);background:var(--cyan)}.button-dark{border-color:var(--ink);color:#fff;background:var(--ink)}.button-ghost{background:rgba(255,255,255,.64)}
+    .workspace{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;margin-top:16px}
+    .graph-card{min-width:0;overflow:hidden}.card-heading{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;border-bottom:1px solid var(--line)}
+    .card-heading h2{margin-top:5px;font-size:18px}.card-heading-copy{color:var(--slate);margin-top:4px;font-size:10px;line-height:1.45}
+    .graph-legend{display:flex;align-items:center;gap:13px;color:var(--muted);font-size:9px;white-space:nowrap}.legend-item{display:inline-flex;align-items:center;gap:6px}
+    .legend-swatch{width:9px;height:9px;border-radius:3px;border:1px solid var(--line-strong);background:#fff}.legend-swatch.current{border-color:var(--cyan);background:var(--cyan-pale)}.legend-swatch.waiting{border-color:var(--amber);background:var(--amber-pale)}
+    .graph-viewport{position:relative;min-height:660px;overflow:auto;background:linear-gradient(rgba(21,34,56,.032) 1px,transparent 1px),linear-gradient(90deg,rgba(21,34,56,.032) 1px,transparent 1px),#fcfcfa;background-size:32px 32px;scrollbar-width:thin}
+    .graph-canvas{position:relative;min-width:100%;min-height:100%}.connectors{position:absolute;inset:0;overflow:visible;pointer-events:none}
+    .connector{fill:none;stroke:#cbd1d7;stroke-width:1.7}.connector.is-active{stroke:var(--cyan);stroke-width:2.6}
+    .graph-node{position:absolute;width:248px;min-height:80px;padding:13px 14px;border:1px solid var(--line-strong);border-radius:13px;cursor:pointer;text-align:left;color:var(--ink);background:#fff;box-shadow:var(--shadow-soft);transition:transform .16s,border-color .16s,box-shadow .16s}
+    .graph-node:hover{transform:translateY(-2px);border-color:#aeb7c1;box-shadow:0 13px 30px rgba(27,42,65,.1)}.graph-node.is-selected{z-index:2;border:2px solid var(--cyan);padding:12px 13px;box-shadow:0 14px 36px rgba(32,184,211,.17)}
+    .graph-node.is-root{color:#fff;border-color:var(--ink);background:var(--ink)}
+    .node-top{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}.node-title{min-width:0;overflow-wrap:anywhere;font-size:14px;font-weight:800;line-height:1.25}
+    .node-code{margin-top:4px;color:var(--muted);font:9px ui-monospace,Consolas,monospace;letter-spacing:.05em}.graph-node.is-root .node-code{color:#9eacbd}
+    .node-gate{flex:0 0 auto;max-width:76px;overflow:hidden;padding:4px 6px;border-radius:99px;color:var(--cyan-deep);background:var(--cyan-pale);font:8px ui-monospace,Consolas,monospace;text-overflow:ellipsis;white-space:nowrap}.graph-node.is-root .node-gate{color:var(--ink);background:var(--cyan)}
+    .node-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(130,144,164,.18)}
+    .node-owner{min-width:0;overflow:hidden;color:var(--slate);font-size:9px;text-overflow:ellipsis;white-space:nowrap}.graph-node.is-root .node-owner{color:#b4bfcd}
+    .node-pending{display:inline-flex;align-items:center;gap:4px;color:var(--amber);font-size:9px;font-weight:800;white-space:nowrap}.node-pending:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.node-pending.is-clear{color:var(--green)}
+    .node-add{position:absolute;right:-8px;bottom:-8px;width:25px;height:25px;display:grid;place-items:center;border:0;border-radius:50%;cursor:pointer;color:#fff;background:var(--cyan-deep);box-shadow:0 4px 12px rgba(8,127,153,.28);font-size:15px}
+    .detail-card{align-self:start;overflow:hidden;position:sticky;top:86px}.detail-inner{padding:19px}
+    .detail-title{margin-top:6px;font-size:24px;line-height:1.18;overflow-wrap:anywhere}.detail-code{margin-top:6px;color:var(--muted);font:9px ui-monospace,Consolas,monospace}
+    .detail-stage{margin-top:17px;padding:14px;border-radius:14px;color:#fff;background:var(--ink)}.detail-stage-label{color:var(--cyan);font:9px ui-monospace,Consolas,monospace;letter-spacing:.12em}
+    .detail-stage-value{margin-top:7px;font-size:17px;font-weight:800}.detail-stage-copy{margin-top:6px;color:#b8c3d0;font-size:10px;line-height:1.55}
+    .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.detail-metric{padding:11px;border:1px solid var(--line);border-radius:11px;background:#fbfbf8}
+    .detail-metric-label{color:var(--muted);font:8px ui-monospace,Consolas,monospace;letter-spacing:.09em}.detail-metric-value{margin-top:6px;overflow-wrap:anywhere;font-size:12px;font-weight:800}
+    .pending-card{margin-top:12px;padding:13px;border:1px solid rgba(189,116,31,.24);border-radius:13px;background:var(--amber-pale)}.pending-title{color:var(--amber);font:9px ui-monospace,Consolas,monospace;letter-spacing:.09em}
+    .pending-person{margin-top:8px;font-size:13px;font-weight:800}.pending-note{margin-top:4px;color:var(--slate);font-size:10px;line-height:1.5}.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px}
+    .footer{display:flex;justify-content:space-between;gap:18px;margin-top:16px;color:var(--muted);font-size:9px;line-height:1.55}.footer span:last-child{text-align:right;font-family:ui-monospace,Consolas,monospace}
+    dialog{width:min(440px,calc(100% - 28px));padding:0;border:0;border-radius:18px;color:var(--ink);background:#fff;box-shadow:0 28px 80px rgba(21,34,56,.3)}dialog::backdrop{background:rgba(21,34,56,.44);backdrop-filter:blur(4px)}
+    .dialog-inner{padding:24px}.dialog-inner h2{font-size:22px}.dialog-copy{margin-top:8px;color:var(--slate);font-size:12px;line-height:1.6}.dialog-label{display:block;margin-top:19px;color:var(--muted);font:9px ui-monospace,Consolas,monospace;letter-spacing:.1em}
+    .dialog-input{width:100%;margin-top:7px;padding:12px;border:1px solid var(--line-strong);border-radius:10px;color:var(--ink);background:var(--paper)}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+    .toast{position:fixed;right:20px;bottom:20px;z-index:50;max-width:min(410px,calc(100% - 40px));padding:12px 15px;border:1px solid rgba(32,184,211,.42);border-radius:11px;color:var(--ink);background:#fff;box-shadow:0 14px 36px rgba(21,34,56,.18);font-size:11px;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .18s,transform .18s}.toast.is-visible{opacity:1;transform:translateY(0)}
+    @media(max-width:1180px){.approval-panel{grid-template-columns:240px minmax(460px,1fr)}.approval-actions{grid-column:1/-1;flex-direction:row;justify-content:flex-end}.workspace{grid-template-columns:1fr}.detail-card{position:static}.detail-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    @media(max-width:760px){
+      .appbar-inner,.shell{width:min(100% - 24px,1720px)}.appbar-inner{min-height:62px}.brand-title{font-size:11px}.brand-path,.local-pill{display:none}.shell{padding-top:20px}
+      .intro{grid-template-columns:1fr;gap:14px}h1{font-size:34px}.intro-copy{font-size:13px}.plan-meta{grid-template-columns:repeat(3,minmax(0,1fr))}.meta-chip{min-width:0;padding:9px}
+      .workflow-heading{align-items:flex-start;padding:16px}.current-badge{max-width:44%;overflow:hidden;text-overflow:ellipsis}.gate-scroll{padding:14px 12px}.gate-track{min-width:1180px}.gate{min-width:155px;min-height:78px}
+      .approval-panel{grid-template-columns:1fr;gap:14px;padding:16px}.signer-list{grid-template-columns:1fr}.approval-actions{grid-column:auto;display:grid;grid-template-columns:1fr 1fr}
+      .card-heading{align-items:flex-start}.graph-legend{display:none}.graph-viewport{min-height:580px}.detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.footer{flex-direction:column}.footer span:last-child{text-align:left}
     }
   </style>
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark" aria-hidden="true">P／B</div>
-        <div>
-          <div class="brand-title">CONSTRUCTION PLANNING &amp; BUDGET</div>
-          <div class="brand-subtitle">CONTROLLED EXECUTION DEMO</div>
-        </div>
-      </div>
-      <div class="top-actions">
-        <span class="local-badge">● LOCAL ONLY · NO BACKEND</span>
-        <button class="button button-dark" id="reset-demo" type="button">Reset demo</button>
-      </div>
-    </header>
-
-    <main>
-      <section class="hero" aria-labelledby="page-title">
-        <div>
-          <div class="eyebrow">LIVE DEMO · PLAN SNO PLN-BUDGET-001 · VERSION 3</div>
-          <h1 id="page-title">Planning／Budget<br>→ controlled<br class="mobile-only-break"> execution</h1>
-          <p class="hero-copy">從既有 demo 抽出最小可操作版本：建立任意層級的節點、查看每個節點的 sign-off 狀況，並讓每個 leaf node 走過受控執行流程。</p>
-        </div>
-        <div class="hero-note">
-          <strong>DEMO BOUNDARY</strong>
-          所有狀態只存在目前瀏覽器的 localStorage；沒有 API、登入或後端資料庫。重新整理仍會保留本機 demo 狀態。
-        </div>
-      </section>
-
-      <section class="summary-grid" aria-label="Demo summary">
-        <div class="summary-card"><div class="summary-label">Total nodes</div><div class="summary-value" id="summary-total">—</div><div class="summary-hint">root + nested nodes</div></div>
-        <div class="summary-card"><div class="summary-label">Leaf nodes</div><div class="summary-value" id="summary-leaves">—</div><div class="summary-hint">可按 Execute</div></div>
-        <div class="summary-card"><div class="summary-label">Signed off</div><div class="summary-value" id="summary-signed">—</div><div class="summary-hint">已完成 sign-off</div></div>
-        <div class="summary-card"><div class="summary-label">In execution</div><div class="summary-value" id="summary-execution">—</div><div class="summary-hint">pending / complete</div></div>
-      </section>
-
-      <section class="workspace" aria-label="Planning and Budget demo workspace">
-        <div class="tree-panel">
-          <div class="panel-header">
-            <div>
-              <div class="eyebrow">WBS / MODULE TREE</div>
-              <h2>節點與 sign-off</h2>
-              <p class="panel-description">點選節點查看右側 inspector。每個節點都能新增 child；只有沒有 child 的 leaf node 會顯示 Execute。</p>
-            </div>
-            <div class="panel-actions">
-              <button class="button button-primary" id="add-root" type="button">＋ Add root child</button>
-            </div>
-          </div>
-          <div class="tree-scroll">
-            <div class="tree-root" id="tree" role="tree" aria-label="Planning Budget node tree"></div>
-          </div>
-        </div>
-
-        <aside class="inspector" aria-live="polite" aria-label="Selected node inspector">
-          <div class="inspector-inner" id="inspector"></div>
-        </aside>
-      </section>
-    </main>
-
-    <div class="footer-note">
-      <span>此頁為展示用 prototype；Sign-off 與 Execute 不會呼叫任何外部系統。</span>
-      <span>static HTML · vanilla JS · GitHub Pages ready</span>
+  <header class="appbar">
+    <div class="appbar-inner">
+      <div class="brand"><div class="brand-mark" aria-hidden="true">WBS</div><div><div class="brand-title">CONSTRUCTION CONTROL CENTER</div><div class="brand-path">Planning / Budget / WBS-2026-001</div></div></div>
+      <div class="app-actions"><span class="local-pill">LOCAL DEMO · NO BACKEND</span><button class="button button-ghost" id="reset-demo" type="button">重設 Demo</button></div>
     </div>
-  </div>
-
-  <dialog id="add-dialog" aria-labelledby="add-dialog-title">
-    <form class="dialog-inner" id="add-form">
-      <h2 id="add-dialog-title">新增子節點</h2>
-      <p class="dialog-copy" id="add-dialog-copy">建立後會立即出現在目前節點底下，並成為可執行的 leaf node。</p>
-      <label class="dialog-label" for="new-node-name">NODE NAME</label>
-      <input class="dialog-input" id="new-node-name" name="name" required maxlength="80" placeholder="例如：Electrical package" autocomplete="off">
-      <div class="dialog-actions">
-        <button class="button" id="cancel-add" type="button">Cancel</button>
-        <button class="button button-primary" type="submit">Create node</button>
+  </header>
+  <main class="shell">
+    <section class="intro" aria-labelledby="page-title">
+      <div><div class="eyebrow">WBS WORKFLOW / APPROVAL VISIBILITY</div><h1 id="page-title">建廠 WBS 與簽核關卡</h1><p class="intro-copy">點選節點查看它目前走到哪一關；上方流程直接顯示已完成、進行中與尚未開始的關卡，以及每一位簽核人的狀態。</p></div>
+      <div class="plan-meta" aria-label="Plan metadata"><div class="meta-chip"><div class="meta-label">PLAN SNO</div><div class="meta-value">PLN-26001</div></div><div class="meta-chip"><div class="meta-label">VERSION</div><div class="meta-value">v3.2</div></div><div class="meta-chip"><div class="meta-label">TOTAL BUDGET</div><div class="meta-value" id="total-budget">—</div></div></div>
+    </section>
+    <section class="card workflow-card" aria-labelledby="workflow-title">
+      <div class="workflow-heading"><div class="workflow-title"><div class="eyebrow">SELECTED NODE WORKFLOW</div><h2 id="workflow-title">—</h2></div><div class="current-badge" id="current-badge">—</div></div>
+      <div class="gate-scroll" aria-label="Approval gate progress"><div class="gate-track" id="gate-track"></div></div>
+      <div class="approval-panel" id="approval-panel"></div>
+    </section>
+    <section class="workspace" aria-label="WBS workspace">
+      <div class="card graph-card">
+        <div class="card-heading"><div><div class="eyebrow">CONSTRUCTION / WBS MAP</div><h2>工作分解結構</h2><p class="card-heading-copy">點選任一節點查看簽核；按節點右下角 ＋ 可繼續展開。</p></div><div class="graph-legend"><span class="legend-item"><span class="legend-swatch current"></span>目前選取</span><span class="legend-item"><span class="legend-swatch waiting"></span>有人待簽</span></div></div>
+        <div class="graph-viewport" id="graph-viewport"><div class="graph-canvas" id="graph-canvas"></div></div>
       </div>
-    </form>
+      <aside class="card detail-card" aria-live="polite" aria-label="Selected node detail"><div class="detail-inner" id="detail"></div></aside>
+    </section>
+    <footer class="footer"><span>Prototype：簽核、節點與關卡資料只儲存在此瀏覽器 localStorage，不會呼叫 ERP 或其他後端。</span><span>STATIC HTML · VANILLA JS · GITHUB PAGES READY</span></footer>
+  </main>
+  <dialog id="add-dialog" aria-labelledby="dialog-title">
+    <form class="dialog-inner" id="add-form"><h2 id="dialog-title">新增 WBS 子節點</h2><p class="dialog-copy" id="dialog-copy">新節點會接在目前節點右側，並建立自己的簽核流程。</p><label class="dialog-label" for="new-node-name">NODE NAME</label><input class="dialog-input" id="new-node-name" name="name" maxlength="72" required autocomplete="off" placeholder="例如：Chilled Water Package"><div class="dialog-actions"><button class="button" id="cancel-add" type="button">取消</button><button class="button button-primary" type="submit">建立節點</button></div></form>
   </dialog>
   <div class="toast" id="toast" role="status"></div>
-
   <script>
     'use strict';
-
-    const STORAGE_KEY = 'construction-planning-budget-demo-v1';
-    const STAGES = [
-      { key: 'intake', label: 'INTAKE', caption: '收件／資料進入' },
-      { key: 'validate', label: 'VALIDATE', caption: '規則／預算檢查' },
-      { key: 'govern', label: 'GOVERN', caption: '審查／Delta 核准' },
-      { key: 'release', label: 'RELEASE', caption: 'ERP 受控執行' },
+    const STORAGE_KEY='construction-wbs-control-demo-v2',CARD_WIDTH=248,CARD_HEIGHT=80,COLUMN_GAP=300,ROW_GAP=112;
+    const PROCESS_STAGES=[
+      {key:'planning',name:'Operation Planning',short:'PLANNING',sub:'需求與預算',description:'確認需求、WBS 範圍與預算版本。',signers:[['王怡文','Planning PM'],['陳志明','部門主管']]},
+      {key:'pr',name:'PR',short:'PR',sub:'請購送審',description:'確認預算可用、需求完整並核准請購。',signers:[['林雅雯','需求單位'],['黃國倫','預算管理'],['李佳蓉','採購主管']]},
+      {key:'sourcing',name:'Sourcing',short:'SOURCING',sub:'尋源與比價',description:'確認供應商、報價與採購策略。',signers:[['蔡宗翰','Sourcing Buyer'],['周曉芬','採購經理']]},
+      {key:'po',name:'PO',short:'PO',sub:'採購單核准',description:'確認採購條件並正式建立採購單。',signers:[['吳佩珊','Buyer'],['郭建宏','採購主管']]},
+      {key:'dn',name:'DN',short:'DN',sub:'交貨通知',description:'供應商回覆交期與送貨資訊。',signers:[['許文琪','供應商窗口'],['張家豪','專案工程師']]},
+      {key:'delivery',name:'Delivery',short:'DELIVERY',sub:'到貨確認',description:'確認實際到貨、文件與數量。',signers:[['曾郁婷','倉儲'],['陳俊凱','工程窗口']]},
+      {key:'gr',name:'GR Acceptance',short:'GR',sub:'收貨驗收',description:'完成收貨、品質與現場驗收。',signers:[['劉書豪','驗收人員'],['林佳蓉','品質主管'],['王怡文','專案 PM']]},
+      {key:'ap',name:'AP Payment',short:'AP',sub:'付款與結案',description:'完成憑證核對、付款與預算結案。',signers:[['鄭雅心','AP 會計'],['楊志成','財務主管']]}
     ];
-    const INITIAL_NODES = [
-      { id: 'planning-budget', parentId: null, title: 'Planning／Budget', code: 'ROOT', budget: 5830000 },
-      { id: 'sales-planning', parentId: 'planning-budget', title: 'Sales planning', code: 'L2-01', budget: 420000 },
-      { id: 'capacity-capex', parentId: 'planning-budget', title: 'Capacity ／ Capex planning', code: 'L2-02', budget: 1200000 },
-      { id: 'facility-planning', parentId: 'planning-budget', title: 'Facility planning', code: 'L2-03', budget: 680000 },
-      { id: 'equipment-planning', parentId: 'planning-budget', title: 'Equipment planning', code: 'L2-04', budget: 920000 },
-      { id: 'human-resource-planning', parentId: 'planning-budget', title: 'Human resource planning', code: 'L2-05', budget: 210000 },
-      { id: 'construction-planning', parentId: 'planning-budget', title: 'Construction Planning', code: 'L2-06', budget: 2400000 },
+    const INITIAL_NODES=[
+      {id:'construction',parentId:null,title:'Construction',code:'ROOT',owner:'建廠專案辦公室',budget:5830000,stageIndex:2},
+      {id:'water',parentId:'construction',title:'Water',code:'WTR',owner:'Water Team',budget:620000,stageIndex:1},
+      {id:'mep',parentId:'construction',title:'MEP',code:'MEC',owner:'MEP Lead',budget:2680000,stageIndex:2},
+      {id:'electrical',parentId:'construction',title:'Electrical',code:'ELC',owner:'Electrical Team',budget:1410000,stageIndex:0},
+      {id:'gas',parentId:'construction',title:'Gas',code:'GAS',owner:'Gas Team',budget:1120000,stageIndex:1},
+      {id:'mep-pump-grp',parentId:'mep',title:'Pump Package',code:'MEP-PUMP-GRP',owner:'Mechanical Team',budget:980000,stageIndex:3},
+      {id:'mep-duct-grp',parentId:'mep',title:'Duct Package',code:'MEP-DUCT-GRP',owner:'HVAC Team',budget:740000,stageIndex:2},
+      {id:'mep-pump',parentId:'mep-pump-grp',title:'Pump Detail',code:'MEP-PUMP',owner:'Pump Engineer',budget:420000,stageIndex:3},
+      {id:'mep-valve',parentId:'mep-pump-grp',title:'Valve Detail',code:'MEP-VALVE',owner:'Piping Engineer',budget:260000,stageIndex:2},
+      {id:'mep-pipe',parentId:'mep-pump-grp',title:'Pipe Detail',code:'MEP-PIPE',owner:'Piping Engineer',budget:300000,stageIndex:1},
+      {id:'mep-duct',parentId:'mep-duct-grp',title:'Duct Detail',code:'MEP-DUCT',owner:'HVAC Engineer',budget:740000,stageIndex:2}
     ];
-
-    const treeElement = document.getElementById('tree');
-    const inspectorElement = document.getElementById('inspector');
-    const dialog = document.getElementById('add-dialog');
-    const addForm = document.getElementById('add-form');
-    const newNodeName = document.getElementById('new-node-name');
-    const toastElement = document.getElementById('toast');
-    let pendingParentId = null;
-    let toastTimer = null;
-
-    function freshState() {
-      return {
-        nodes: INITIAL_NODES.map(node => ({ ...node })),
-        signoff: Object.fromEntries(INITIAL_NODES.map(node => [node.id, 'not_started'])),
-        execution: {},
-        collapsed: {},
-        selectedId: 'planning-budget',
-      };
+    const graphCanvas=document.getElementById('graph-canvas'),graphViewport=document.getElementById('graph-viewport'),gateTrack=document.getElementById('gate-track'),approvalPanel=document.getElementById('approval-panel'),detailElement=document.getElementById('detail'),dialog=document.getElementById('add-dialog'),addForm=document.getElementById('add-form'),newNodeName=document.getElementById('new-node-name'),toastElement=document.getElementById('toast');
+    let pendingParentId=null,toastTimer=null,detailStageIndex=null;
+    function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+    function initials(name){return String(name).slice(-2)} function formatMoney(value){return '$'+Math.round(Number(value)||0).toLocaleString('en-US')}
+    function makeApprovals(stageIndex){const approvals={};PROCESS_STAGES.forEach((stage,index)=>{approvals[stage.key]=stage.signers.map(([name,role],signerIndex)=>({name,role,status:index<stageIndex?'approved':index===stageIndex?(signerIndex===0?'approved':signerIndex===1?'pending':'not_started'):'not_started',signedAt:index<stageIndex||(index===stageIndex&&signerIndex===0)?'08/15 14:20':null}))});return approvals}
+    function freshState(){return{nodes:INITIAL_NODES.map(n=>({...n})),workflows:Object.fromEntries(INITIAL_NODES.map(n=>[n.id,{stageIndex:n.stageIndex,complete:false,approvals:makeApprovals(n.stageIndex)}])),selectedId:'construction'}}
+    function loadState(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));return saved&&Array.isArray(saved.nodes)&&saved.nodes.length&&saved.workflows?saved:freshState()}catch(error){return freshState()}}
+    let state=loadState();
+    function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(error){}}
+    function nodeById(id){return state.nodes.find(n=>n.id===id)||null} function childrenOf(id){return state.nodes.filter(n=>n.parentId===id)} function workflowOf(id){return state.workflows[id]}
+    function currentStage(node){return PROCESS_STAGES[workflowOf(node.id).stageIndex]} function approvalsFor(node,index){return workflowOf(node.id).approvals[PROCESS_STAGES[index].key]||[]}
+    function unresolvedApprovals(node,index){return approvalsFor(node,index).filter(p=>p.status!=='approved')}
+    function gateStatus(node,index){const w=workflowOf(node.id);return w.complete||index<w.stageIndex?'done':index===w.stageIndex?'current':'upcoming'}
+    function renderGates(node){
+      const w=workflowOf(node.id),viewed=detailStageIndex===null?w.stageIndex:detailStageIndex;
+      gateTrack.innerHTML=PROCESS_STAGES.map((stage,index)=>{const status=gateStatus(node,index),mark=status==='done'?'✓':status==='current'?'●':String(index+1);return '<button class="gate is-'+status+(viewed===index?' is-viewing':'')+'" data-gate-index="'+index+'" type="button"><span class="gate-state">'+mark+'</span><div class="gate-step">GATE '+String(index+1).padStart(2,'0')+'</div><div class="gate-name">'+escapeHtml(stage.name)+'</div><div class="gate-sub">'+escapeHtml(stage.sub)+'</div></button>'}).join('')
     }
-
-    function loadState() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (!saved || !Array.isArray(saved.nodes) || !saved.nodes.length) return freshState();
-        const base = freshState();
-        return {
-          ...base,
-          ...saved,
-          signoff: { ...base.signoff, ...(saved.signoff || {}) },
-          execution: saved.execution || {},
-          collapsed: saved.collapsed || {},
-          selectedId: saved.selectedId || 'planning-budget',
-        };
-      } catch (error) {
-        return freshState();
-      }
+    function renderApprovalPanel(node){
+      const w=workflowOf(node.id),index=detailStageIndex===null?w.stageIndex:detailStageIndex,stage=PROCESS_STAGES[index],approvals=approvalsFor(node,index),approved=approvals.filter(p=>p.status==='approved').length,pending=approvals.length-approved,percent=approvals.length?Math.round(approved/approvals.length*100):0,isCurrent=index===w.stageIndex&&!w.complete,currentDone=unresolvedApprovals(node,w.stageIndex).length===0;
+      const signers=approvals.map(person=>'<div class="signer is-'+person.status+'"><div class="avatar">'+escapeHtml(initials(person.name))+'</div><div><div class="signer-name">'+escapeHtml(person.name)+'</div><div class="signer-role">'+escapeHtml(person.role)+(person.signedAt?' · '+person.signedAt:'')+'</div></div><div class="status-dot" title="'+(person.status==='approved'?'已簽核':person.status==='pending'?'待簽核':'尚未開始')+'">'+(person.status==='approved'?'✓':person.status==='pending'?'!':'·')+'</div></div>').join('');
+      approvalPanel.innerHTML='<div class="approval-summary"><div class="eyebrow">'+(index<w.stageIndex||w.complete?'COMPLETED GATE':index===w.stageIndex?'CURRENT GATE':'UPCOMING GATE')+'</div><h3>'+escapeHtml(stage.name)+' · '+escapeHtml(stage.sub)+'</h3><p>'+escapeHtml(stage.description)+'<br><strong>'+approved+' / '+approvals.length+'</strong> 位已簽，'+pending+' 位未完成</p><div class="progress-line"><span style="width:'+percent+'%"></span></div></div><div class="signer-list">'+signers+'</div><div class="approval-actions"><button class="button button-primary" id="approve-next" type="button"'+(!isCurrent||currentDone?' disabled':'')+'>簽核下一位</button><button class="button button-dark" id="advance-gate" type="button"'+(!isCurrent||!currentDone?' disabled':'')+'>'+(w.stageIndex===PROCESS_STAGES.length-1?'完成流程':'進入下一關')+'</button></div>'
     }
-
-    let state = loadState();
-
-    function persist() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (error) { /* private browsing may deny storage */ }
+    function layoutGraph(){
+      const positions={};let leafCursor=0,maxDepth=0;
+      function visit(node,depth){maxDepth=Math.max(maxDepth,depth);const children=childrenOf(node.id);let y;if(!children.length){y=42+leafCursor*ROW_GAP;leafCursor++}else{const ys=children.map(c=>visit(c,depth+1));y=(ys[0]+ys[ys.length-1])/2}positions[node.id]={x:28+depth*COLUMN_GAP,y,depth};return y}
+      state.nodes.filter(n=>!n.parentId).forEach(root=>visit(root,0));return{positions,width:Math.max(1160,28+(maxDepth+1)*COLUMN_GAP+70),height:Math.max(660,42+Math.max(leafCursor,1)*ROW_GAP+34)}
     }
-
-    function escapeHtml(value) {
-      return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+    function renderGraph(){
+      const layout=layoutGraph(),selected=nodeById(state.selectedId);graphCanvas.style.width=layout.width+'px';graphCanvas.style.height=layout.height+'px';
+      const paths=state.nodes.filter(n=>n.parentId).map(node=>{const p=layout.positions[node.parentId],c=layout.positions[node.id],x1=p.x+CARD_WIDTH,y1=p.y+CARD_HEIGHT/2,x2=c.x,y2=c.y+CARD_HEIGHT/2,b=Math.max(46,(x2-x1)*.48),active=selected&&(node.id===selected.id||node.parentId===selected.id);return '<path class="connector'+(active?' is-active':'')+'" d="M '+x1+' '+y1+' C '+(x1+b)+' '+y1+', '+(x2-b)+' '+y2+', '+x2+' '+y2+'"></path>'}).join('');
+      const nodes=state.nodes.map(node=>{const pos=layout.positions[node.id],w=workflowOf(node.id),stage=PROCESS_STAGES[w.stageIndex],pending=w.complete?0:unresolvedApprovals(node,w.stageIndex).length;return '<button class="graph-node'+(node.parentId?'':' is-root')+(state.selectedId===node.id?' is-selected':'')+'" style="left:'+pos.x+'px;top:'+pos.y+'px" data-node-id="'+escapeHtml(node.id)+'" type="button"><div class="node-top"><div><div class="node-title">'+escapeHtml(node.title)+'</div><div class="node-code">'+escapeHtml(node.code)+'</div></div><span class="node-gate">'+(w.complete?'COMPLETE':escapeHtml(stage.short))+'</span></div><div class="node-bottom"><span class="node-owner">'+escapeHtml(node.owner)+'</span><span class="node-pending'+(pending?'':' is-clear')+'">'+(pending?pending+' 位待簽':'簽核完成')+'</span></div><span class="node-add" data-add-id="'+escapeHtml(node.id)+'" role="button" aria-label="新增子節點">＋</span></button>'}).join('');
+      graphCanvas.innerHTML='<svg class="connectors" width="'+layout.width+'" height="'+layout.height+'" aria-hidden="true">'+paths+'</svg>'+nodes
     }
-
-    function formatMoney(value) {
-      return '$' + Math.round(Number(value) || 0).toLocaleString('en-US');
+    function renderDetail(node){
+      const w=workflowOf(node.id),stage=currentStage(node),children=childrenOf(node.id),unresolved=w.complete?[]:unresolvedApprovals(node,w.stageIndex),next=unresolved[0];
+      detailElement.innerHTML='<div><div class="eyebrow">SELECTED WBS NODE</div><h2 class="detail-title">'+escapeHtml(node.title)+'</h2><div class="detail-code">'+escapeHtml(node.code)+' · '+escapeHtml(node.owner)+'</div></div><div class="detail-stage"><div class="detail-stage-label">'+(w.complete?'WORKFLOW COMPLETE':'CURRENT GATE '+String(w.stageIndex+1).padStart(2,'0'))+'</div><div class="detail-stage-value">'+(w.complete?'流程已完成':escapeHtml(stage.name+' · '+stage.sub))+'</div><div class="detail-stage-copy">'+(w.complete?'所有關卡與簽核已完成。':escapeHtml(stage.description))+'</div></div><div class="detail-grid"><div class="detail-metric"><div class="detail-metric-label">BUDGET</div><div class="detail-metric-value">'+formatMoney(node.budget)+'</div></div><div class="detail-metric"><div class="detail-metric-label">CHILD NODES</div><div class="detail-metric-value">'+children.length+'</div></div><div class="detail-metric"><div class="detail-metric-label">OWNER</div><div class="detail-metric-value">'+escapeHtml(node.owner)+'</div></div><div class="detail-metric"><div class="detail-metric-label">PROGRESS</div><div class="detail-metric-value">'+(w.complete?'8 / 8':(w.stageIndex+1)+' / 8')+'</div></div></div><div class="pending-card"><div class="pending-title">WHO HAS NOT SIGNED</div><div class="pending-person">'+(next?escapeHtml(next.name+' · '+next.role):'目前關卡已全部簽核')+'</div><div class="pending-note">'+(next?'下一位待簽人；上方可查看本關所有人的狀態。':w.complete?'此節點已完成整段流程。':'可進入下一個流程關卡。')+'</div></div><div class="detail-actions"><button class="button button-primary" data-detail-action="add" type="button">＋ 子節點</button><button class="button" data-detail-action="current" type="button">回到目前關卡</button></div>'
     }
-
-    function nodeById(id) { return state.nodes.find(node => node.id === id) || null; }
-    function childrenOf(id) { return state.nodes.filter(node => node.parentId === id); }
-    function isLeaf(node) { return childrenOf(node.id).length === 0; }
-    function signoffState(node) { return state.signoff[node.id] || 'not_started'; }
-    function executionState(node) { return state.execution[node.id] || null; }
-
-    function signoffLabel(value) {
-      return { not_started: 'NOT SENT · 未送簽', pending: 'PENDING · 待簽核', approved: 'SIGNED OFF · 已簽核' }[value] || 'NOT SENT · 未送簽';
-    }
-
-    function signoffAction(value) {
-      return { not_started: '送簽', pending: '核准', approved: '重開' }[value] || '送簽';
-    }
-
-    function executionLabel(node) {
-      const execution = executionState(node);
-      if (!execution) return 'READY TO EXECUTE';
-      if (execution.status === 'complete') return 'EXECUTION COMPLETE';
-      return 'PENDING · ' + STAGES[execution.stage].label;
-    }
-
-    function executionClass(node) {
-      const execution = executionState(node);
-      if (!execution) return 'execution-idle';
-      return execution.status === 'complete' ? 'execution-complete' : 'execution-active';
-    }
-
-    function executeLabel(node) {
-      const execution = executionState(node);
-      if (!execution) return 'Execute';
-      return execution.status === 'complete' ? 'Restart' : 'Advance';
-    }
-
-    function renderNode(node) {
-      const children = childrenOf(node.id);
-      const leaf = children.length === 0;
-      const selected = state.selectedId === node.id;
-      const collapsed = Boolean(state.collapsed[node.id]);
-      const signoff = signoffState(node);
-      const depthLabel = node.parentId ? (leaf ? 'LEAF NODE' : 'NODE') : 'ROOT NODE';
-      const childMarkup = !leaf && !collapsed ? '<div class="children" role="group">' + children.map(renderNode).join('') + '</div>' : '';
-      const toggleLabel = leaf ? '·' : collapsed ? '+' : '−';
-
-      return '<div class="branch">' +
-        '<article class="node-card' + (selected ? ' is-selected' : '') + '" data-node-id="' + escapeHtml(node.id) + '" role="treeitem" aria-selected="' + selected + '" tabindex="0">' +
-          '<div class="node-head">' +
-            '<button class="node-toggle" data-action="toggle" data-id="' + escapeHtml(node.id) + '" type="button" aria-label="' + (leaf ? 'Leaf node' : (collapsed ? 'Expand node' : 'Collapse node')) + '">' + toggleLabel + '</button>' +
-            '<div class="node-copy">' +
-              '<div class="node-kicker"><span class="node-level">' + depthLabel + '</span><span class="node-code">' + escapeHtml(node.code) + '</span></div>' +
-              '<div class="node-title">' + escapeHtml(node.title) + '</div>' +
-            '</div>' +
-            '<span class="status-chip signoff-' + signoff + ' node-signoff">' + signoffLabel(signoff) + '</span>' +
-          '</div>' +
-          '<div class="node-body">' +
-            '<div class="node-meta"><span>Budget <strong>' + formatMoney(node.budget) + '</strong></span>' + (leaf ? '<span class="execution-chip ' + executionClass(node) + '">' + executionLabel(node) + '</span>' : '<span>' + children.length + ' child' + (children.length === 1 ? '' : 'ren') + '</span>') + '</div>' +
-            '<div class="node-actions">' +
-              '<button class="button button-compact" data-action="add" data-id="' + escapeHtml(node.id) + '" type="button">＋ child</button>' +
-              '<button class="button button-compact" data-action="signoff" data-id="' + escapeHtml(node.id) + '" type="button">' + signoffAction(signoff) + '</button>' +
-              (leaf ? '<button class="button button-compact button-primary" data-action="execute" data-id="' + escapeHtml(node.id) + '" type="button">' + executeLabel(node) + '</button>' : '') +
-            '</div>' +
-          '</div>' +
-        '</article>' + childMarkup + '</div>';
-    }
-
-    function renderTree() {
-      const roots = state.nodes.filter(node => !node.parentId);
-      treeElement.innerHTML = '<div class="node-count">' + state.nodes.length + ' NODES · ANY NODE CAN ADD A CHILD</div>' + roots.map(renderNode).join('');
-    }
-
-    function stageState(execution, index) {
-      if (!execution) return 'up-next';
-      if (execution.status === 'complete' || index < execution.stage) return 'done';
-      if (index === execution.stage) return 'current';
-      return 'up-next';
-    }
-
-    function renderStages(node) {
-      const execution = executionState(node);
-      return '<div class="stage-list">' + STAGES.map((stage, index) => {
-        const status = stageState(execution, index);
-        const mark = status === 'done' ? '✓' : String(index + 1);
-        const stateLabel = status === 'done' ? 'DONE' : status === 'current' ? 'PENDING' : 'UP NEXT';
-        return '<div class="stage ' + status + '"><div class="stage-dot">' + mark + '</div><div><div class="stage-label">' + stage.label + '</div><div class="stage-caption">' + stage.caption + '</div></div><div class="stage-state">' + stateLabel + '</div></div>';
-      }).join('') + '</div>';
-    }
-
-    function renderInspector() {
-      const node = nodeById(state.selectedId);
-      if (!node) {
-        inspectorElement.innerHTML = '<div class="empty-inspector"><div><strong>Select a node</strong>點選左側任一節點查看詳情。</div></div>';
-        return;
-      }
-
-      const children = childrenOf(node.id);
-      const leaf = children.length === 0;
-      const signoff = signoffState(node);
-      const execution = executionState(node);
-      const parent = node.parentId ? nodeById(node.parentId) : null;
-      const executionDescription = leaf
-        ? (execution ? (execution.status === 'complete' ? '此 leaf 已完成四段 demo execution。' : '按 Advance 推進下一個受控階段。') : '按 Execute 從 INTAKE 開始；此 demo 不會呼叫後端。')
-        : 'Branch node 不執行；新增 child 後，沒有子節點的 leaf 才能 Execute。';
-
-      inspectorElement.innerHTML =
-        '<div class="inspector-title"><div><div class="eyebrow">SELECTED NODE · ' + (leaf ? 'LEAF' : 'MODULE') + '</div><h2>' + escapeHtml(node.title) + '</h2><div class="inspector-code">' + escapeHtml(node.code) + ' · ' + (parent ? 'parent: ' + escapeHtml(parent.title) : 'top-level root') + '</div></div></div>' +
-        '<div class="inspector-actions">' +
-          '<button class="button button-primary" data-action="add" data-id="' + escapeHtml(node.id) + '" type="button">＋ 新增子節點</button>' +
-          '<button class="button" data-action="signoff" data-id="' + escapeHtml(node.id) + '" type="button">' + signoffAction(signoff) + ' sign-off</button>' +
-          (leaf ? '<button class="button button-dark" data-action="execute" data-id="' + escapeHtml(node.id) + '" type="button">' + executeLabel(node) + '</button>' : '') +
-        '</div>' +
-        '<div class="metric-grid"><div class="metric"><div class="metric-label">BUDGET</div><div class="metric-value">' + formatMoney(node.budget) + '</div></div><div class="metric"><div class="metric-label">CHILDREN</div><div class="metric-value">' + children.length + '</div></div><div class="metric"><div class="metric-label">PLAN SNO</div><div class="metric-value">PLN-BUDGET-001</div></div><div class="metric"><div class="metric-label">VERSION</div><div class="metric-value">v3</div></div></div>' +
-        '<section class="info-card accent-gold"><div class="card-label">SIGN-OFF STATUS</div><div class="card-value"><span class="status-chip signoff-' + signoff + '">' + signoffLabel(signoff) + '</span></div><p class="card-copy">狀態循序為「未送簽 → 待簽核 → 已簽核」。這裡只模擬畫面狀態，不代表正式權限或審批結果。</p></section>' +
-        '<section class="info-card accent-cyan"><div class="card-label">EXECUTION PATH</div><div class="card-value">' + (leaf ? executionLabel(node) : 'MODULE HUB · NO EXECUTE') + '</div><p class="card-copy">' + executionDescription + '</p>' + (leaf ? renderStages(node) : '') + (execution ? '<button class="button button-danger button-compact" data-action="reset" data-id="' + escapeHtml(node.id) + '" type="button" style="margin-top:12px">Reset execution</button>' : '') + '</section>' +
-        '<section class="info-card accent-green"><div class="card-label">NODE RULE</div><div class="card-value">' + (leaf ? 'Leaf = executable work item' : 'Node = expandable work group') + '</div><p class="card-copy">每個節點都可以繼續新增節點；當一個 node 有 child 時，它會自動成為 module hub。</p></section>';
-    }
-
-    function renderSummary() {
-      const leaves = state.nodes.filter(isLeaf);
-      const signed = state.nodes.filter(node => signoffState(node) === 'approved').length;
-      const active = Object.values(state.execution).filter(execution => execution && execution.status !== 'complete').length;
-      const complete = Object.values(state.execution).filter(execution => execution && execution.status === 'complete').length;
-      document.getElementById('summary-total').textContent = state.nodes.length;
-      document.getElementById('summary-leaves').textContent = leaves.length;
-      document.getElementById('summary-signed').textContent = signed + ' / ' + state.nodes.length;
-      document.getElementById('summary-execution').textContent = active + ' / ' + complete;
-    }
-
-    function render() {
-      renderSummary();
-      renderTree();
-      renderInspector();
-      persist();
-    }
-
-    function selectNode(id) {
-      if (!nodeById(id)) return;
-      state.selectedId = id;
-      render();
-    }
-
-    function openAddDialog(parentId) {
-      const parent = nodeById(parentId);
-      if (!parent) return;
-      pendingParentId = parentId;
-      document.getElementById('add-dialog-copy').textContent = '新增到「' + parent.title + '」底下；建立後會成為可執行的 leaf node。';
-      newNodeName.value = '';
-      if (typeof dialog.showModal === 'function') dialog.showModal();
-      else newNodeName.focus();
-      window.setTimeout(() => newNodeName.focus(), 20);
-    }
-
-    function createNode(parentId, title) {
-      const parent = nodeById(parentId);
-      if (!parent || !title.trim()) return;
-      const siblings = childrenOf(parentId);
-      const sequence = String(siblings.length + 1).padStart(2, '0');
-      const code = parent.code === 'ROOT' ? 'L2-' + sequence : parent.code + '.' + sequence;
-      const id = 'custom-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
-      state.nodes.push({ id, parentId, title: title.trim(), code, budget: 0 });
-      state.signoff[id] = 'not_started';
-      state.collapsed[parentId] = false;
-      delete state.execution[parentId];
-      state.selectedId = id;
-      render();
-      showToast('已新增「' + title.trim() + '」；它現在是 leaf node。');
-    }
-
-    function cycleSignoff(id) {
-      const node = nodeById(id);
-      if (!node) return;
-      const current = signoffState(node);
-      const next = { not_started: 'pending', pending: 'approved', approved: 'not_started' }[current];
-      state.signoff[id] = next;
-      state.selectedId = id;
-      render();
-      showToast('「' + node.title + '」sign-off：' + signoffLabel(next));
-    }
-
-    function executeNode(id) {
-      const node = nodeById(id);
-      if (!node || !isLeaf(node)) return;
-      const current = executionState(node);
-      let next;
-      if (!current || current.status === 'complete') next = { stage: 0, status: 'pending' };
-      else if (current.stage < STAGES.length - 1) next = { stage: current.stage + 1, status: 'pending' };
-      else next = { stage: current.stage, status: 'complete' };
-      state.execution[id] = next;
-      state.selectedId = id;
-      render();
-      showToast('「' + node.title + '」→ ' + (next.status === 'complete' ? 'EXECUTION COMPLETE' : STAGES[next.stage].label));
-    }
-
-    function resetExecution(id) {
-      const node = nodeById(id);
-      if (!node) return;
-      delete state.execution[id];
-      render();
-      showToast('已重設「' + node.title + '」的 execution 狀態。');
-    }
-
-    function toggleNode(id) {
-      state.collapsed[id] = !state.collapsed[id];
-      render();
-    }
-
-    function handleAction(event) {
-      const action = event.target.closest('[data-action]');
-      if (action) {
-        event.stopPropagation();
-        const id = action.dataset.id;
-        if (action.dataset.action === 'select') selectNode(id);
-        if (action.dataset.action === 'toggle') toggleNode(id);
-        if (action.dataset.action === 'add') openAddDialog(id);
-        if (action.dataset.action === 'signoff') cycleSignoff(id);
-        if (action.dataset.action === 'execute') executeNode(id);
-        if (action.dataset.action === 'reset') resetExecution(id);
-        return;
-      }
-      const card = event.target.closest('.node-card');
-      if (card) selectNode(card.dataset.nodeId);
-    }
-
-    treeElement.addEventListener('click', handleAction);
-    inspectorElement.addEventListener('click', handleAction);
-    treeElement.addEventListener('keydown', event => {
-      if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.node-card')) {
-        event.preventDefault();
-        selectNode(event.target.dataset.nodeId);
-      }
-    });
-
-    document.getElementById('add-root').addEventListener('click', () => openAddDialog('planning-budget'));
-    document.getElementById('reset-demo').addEventListener('click', () => {
-      state = freshState();
-      render();
-      showToast('Demo 已重設；所有節點回到初始狀態。');
-    });
-    document.getElementById('cancel-add').addEventListener('click', () => dialog.close());
-    addForm.addEventListener('submit', event => {
-      event.preventDefault();
-      const title = newNodeName.value;
-      dialog.close();
-      createNode(pendingParentId, title);
-    });
-
-    function showToast(message) {
-      window.clearTimeout(toastTimer);
-      toastElement.textContent = message;
-      toastElement.classList.add('is-visible');
-      toastTimer = window.setTimeout(() => toastElement.classList.remove('is-visible'), 2600);
-    }
-
-    render();
+    function render(){const node=nodeById(state.selectedId)||state.nodes[0];document.getElementById('total-budget').textContent=formatMoney(state.nodes.filter(n=>n.parentId==='construction').reduce((sum,n)=>sum+n.budget,0));document.getElementById('workflow-title').textContent=node.title+' · '+node.code;document.getElementById('current-badge').textContent=workflowOf(node.id).complete?'流程已完成':'目前：'+currentStage(node).name;renderGates(node);renderApprovalPanel(node);renderGraph();renderDetail(node);persist()}
+    function selectNode(id){if(!nodeById(id))return;state.selectedId=id;detailStageIndex=workflowOf(id).stageIndex;render()}
+    function openAddDialog(parentId){const parent=nodeById(parentId);if(!parent)return;pendingParentId=parentId;document.getElementById('dialog-copy').textContent='新增到「'+parent.title+'」底下；建立後會出現在右側下一層。';newNodeName.value='';dialog.showModal();setTimeout(()=>newNodeName.focus(),30)}
+    function createNode(parentId,title){const parent=nodeById(parentId);if(!parent||!title.trim())return;const siblings=childrenOf(parentId),id='custom-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),code=(parent.code==='ROOT'?'WBS':parent.code)+'-'+String(siblings.length+1).padStart(2,'0'),node={id,parentId,title:title.trim(),code,owner:'待指派',budget:0,stageIndex:0};state.nodes.push(node);state.workflows[id]={stageIndex:0,complete:false,approvals:makeApprovals(0)};state.selectedId=id;detailStageIndex=0;render();showToast('已建立「'+title.trim()+'」，並啟動 Operation Planning 關卡。');setTimeout(()=>{const el=graphCanvas.querySelector('[data-node-id="'+CSS.escape(id)+'"]');if(el)el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})},60)}
+    function approveNext(){const node=nodeById(state.selectedId),w=workflowOf(node.id),approvals=approvalsFor(node,w.stageIndex),next=approvals.find(p=>p.status!=='approved');if(!next)return;next.status='approved';next.signedAt='剛剛';const following=approvals.find(p=>p.status!=='approved');approvals.forEach(p=>{if(p.status!=='approved')p.status=p===following?'pending':'not_started'});render();showToast(next.name+' 已完成簽核'+(following?'；下一位是 '+following.name:'；本關已全部完成'))}
+    function advanceGate(){const node=nodeById(state.selectedId),w=workflowOf(node.id);if(unresolvedApprovals(node,w.stageIndex).length)return;if(w.stageIndex===PROCESS_STAGES.length-1){w.complete=true;showToast('「'+node.title+'」已完成所有流程關卡。')}else{w.stageIndex++;detailStageIndex=w.stageIndex;const approvals=approvalsFor(node,w.stageIndex);approvals.forEach((p,index)=>{p.status=index===0?'pending':'not_started';p.signedAt=null});showToast('已進入 '+PROCESS_STAGES[w.stageIndex].name+' 關卡。')}render()}
+    function showToast(message){clearTimeout(toastTimer);toastElement.textContent=message;toastElement.classList.add('is-visible');toastTimer=setTimeout(()=>toastElement.classList.remove('is-visible'),2600)}
+    graphCanvas.addEventListener('click',event=>{const add=event.target.closest('[data-add-id]');if(add){event.stopPropagation();openAddDialog(add.dataset.addId);return}const node=event.target.closest('[data-node-id]');if(node)selectNode(node.dataset.nodeId)});
+    gateTrack.addEventListener('click',event=>{const gate=event.target.closest('[data-gate-index]');if(!gate)return;detailStageIndex=Number(gate.dataset.gateIndex);render()});
+    approvalPanel.addEventListener('click',event=>{if(event.target.closest('#approve-next'))approveNext();if(event.target.closest('#advance-gate'))advanceGate()});
+    detailElement.addEventListener('click',event=>{if(event.target.closest('[data-detail-action="add"]'))openAddDialog(state.selectedId);if(event.target.closest('[data-detail-action="current"]')){detailStageIndex=workflowOf(state.selectedId).stageIndex;render()}});
+    document.getElementById('reset-demo').addEventListener('click',()=>{state=freshState();detailStageIndex=state.workflows[state.selectedId].stageIndex;render();graphViewport.scrollTo({left:0,top:0,behavior:'smooth'});showToast('Demo 已重設。')});
+    document.getElementById('cancel-add').addEventListener('click',()=>dialog.close());
+    addForm.addEventListener('submit',event=>{event.preventDefault();const title=newNodeName.value;dialog.close();createNode(pendingParentId,title)});
+    detailStageIndex=workflowOf(state.selectedId).stageIndex;render();
   </script>
 </body>
 </html>
